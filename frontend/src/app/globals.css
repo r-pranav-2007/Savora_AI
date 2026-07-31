@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #fbfaff;
+  --foreground: #16121f;
+
+  --color-brand-start: #6366f1;
+  --color-brand-end: #9333ea;
+
+  --shadow-soft: 0 20px 45px -20px rgba(88, 28, 135, 0.18);
+  --shadow-card: 0 10px 30px -12px rgba(30, 15, 60, 0.12);
+}
+
+.dark {
+  --background: #0d0b14;
+  --foreground: #f3f1fa;
+
+  --shadow-soft: 0 20px 45px -20px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 10px 30px -12px rgba(0, 0, 0, 0.55);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+
+  --color-surface: var(--background);
+  --color-surface-foreground: var(--foreground);
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-card: var(--shadow-card);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@layer utilities {
+  .gradient-text {
+    background-image: linear-gradient(135deg, var(--color-brand-start), var(--color-brand-end));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .gradient-brand {
+    background-image: linear-gradient(135deg, var(--color-brand-start), var(--color-brand-end));
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
