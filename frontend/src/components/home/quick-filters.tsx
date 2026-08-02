@@ -25,7 +25,7 @@ export function QuickFilters({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex flex-wrap gap-2.5">
+    <div className="flex flex-wrap justify-center gap-2.5">
       {QUICK_FILTERS.map((filter, index) => (
         <motion.button
           key={filter.label}

@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
-import { INGREDIENT_CATALOG, INGREDIENT_CATEGORIES, getIngredientEmoji } from "@/lib/ingredient-catalog";
+import { Check, Search, SlidersHorizontal } from "lucide-react";
+import { INGREDIENT_CATALOG, INGREDIENT_CATEGORIES } from "@/lib/ingredient-catalog";
+
+const INITIAL_VISIBLE_COUNT = 15;
 
 interface IngredientPickerProps {
   selected: string[];
@@ -14,13 +16,11 @@ export function IngredientPicker({ selected, onChange }: IngredientPickerProps) 
   const [query, setQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [category, setCategory] = useState<string>("All");
-  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const toggle = (name: string) => {
     onChange(selected.includes(name) ? selected.filter((i) => i !== name) : [...selected, name]);
   };
-
-  const remove = (name: string) => onChange(selected.filter((i) => i !== name));
 
   const addCustom = (name: string) => {
     if (!selected.some((i) => i.toLowerCase() === name.toLowerCase())) {
@@ -44,9 +44,9 @@ export function IngredientPicker({ selected, onChange }: IngredientPickerProps) 
     });
   }, [category, query]);
 
-  const scrollBy = (direction: 1 | -1) => {
-    scrollerRef.current?.scrollBy({ left: direction * 240, behavior: "smooth" });
-  };
+  const isFiltering = query.trim().length > 0 || category !== "All";
+  const showAll = isFiltering || expanded || filteredCatalog.length <= INITIAL_VISIBLE_COUNT;
+  const visibleCatalog = showAll ? filteredCatalog : filteredCatalog.slice(0, INITIAL_VISIBLE_COUNT);
 
   return (
     <div className="flex flex-col gap-5">
@@ -56,7 +56,10 @@ export function IngredientPicker({ selected, onChange }: IngredientPickerProps) 
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setExpanded(false);
+            }}
             onKeyDown={handleSearchKeyDown}
             placeholder="Search or add the ingredients you have"
             className="min-w-0 flex-1 bg-transparent text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none dark:text-white dark:placeholder:text-neutral-500"
@@ -88,7 +91,10 @@ export function IngredientPicker({ selected, onChange }: IngredientPickerProps) 
             <button
               key={cat}
               type="button"
-              onClick={() => setCategory(cat)}
+              onClick={() => {
+                setCategory(cat);
+                setExpanded(false);
+              }}
               className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                 category === cat
                   ? "gradient-brand border-transparent text-white"
@@ -101,94 +107,53 @@ export function IngredientPicker({ selected, onChange }: IngredientPickerProps) 
         </motion.div>
       )}
 
-      <div>
-        <p className="mb-3 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-          Popular ingredients
-        </p>
-        <div className="relative">
-          <div
-            ref={scrollerRef}
-            className="scrollbar-none flex gap-2.5 overflow-x-auto scroll-smooth pb-1"
-          >
-            {filteredCatalog.length > 0 ? (
-              filteredCatalog.map((item) => {
-                const isSelected = selected.includes(item.name);
-                return (
-                  <button
-                    key={item.name}
-                    type="button"
-                    onClick={() => toggle(item.name)}
-                    className={`flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 ${
-                      isSelected
-                        ? "border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-400/40 dark:bg-violet-500/15 dark:text-violet-300"
-                        : "border-black/10 bg-white text-neutral-700 hover:border-violet-200 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300"
-                    }`}
-                  >
-                    <span className="text-base leading-none">{item.emoji}</span>
-                    {item.name}
-                  </button>
-                );
-              })
-            ) : (
-              <p className="py-2 text-sm text-neutral-400 dark:text-neutral-500">
-                No matches — press Enter in the search box to add &ldquo;{query}&rdquo; as a custom
-                ingredient.
-              </p>
-            )}
-          </div>
-          {filteredCatalog.length > 4 && (
-            <>
-              <button
+      {visibleCatalog.length > 0 ? (
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+          {visibleCatalog.map((item, i) => {
+            const isSelected = selected.includes(item.name);
+            return (
+              <motion.button
+                key={item.name}
                 type="button"
-                onClick={() => scrollBy(-1)}
-                aria-label="Scroll left"
-                className="absolute -left-2 top-1/2 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-black/5 bg-white text-neutral-500 shadow-md sm:flex dark:border-white/10 dark:bg-[#1a1626]"
+                onClick={() => toggle(item.name)}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: Math.min(i, 10) * 0.02 }}
+                className={`relative flex items-center gap-2.5 rounded-2xl border p-3 text-left transition-colors ${
+                  isSelected
+                    ? "border-violet-300 bg-violet-50/60 dark:border-violet-400/40 dark:bg-violet-500/10"
+                    : "border-black/10 bg-white hover:border-violet-200 dark:border-white/10 dark:bg-white/5"
+                }`}
               >
-                <ChevronLeft size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollBy(1)}
-                aria-label="Scroll right"
-                className="absolute -right-2 top-1/2 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-black/5 bg-white text-neutral-500 shadow-md sm:flex dark:border-white/10 dark:bg-[#1a1626]"
-              >
-                <ChevronRight size={14} />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {selected.length > 0 && (
-        <div>
-          <p className="mb-3 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-            Your selected ingredients
-          </p>
-          <div className="flex flex-wrap gap-2.5">
-            {selected.map((name) => (
-              <motion.span
-                key={name}
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.85 }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 py-1.5 pl-3 pr-2 text-sm font-medium text-violet-700 dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-300"
-              >
-                <Check size={13} />
-                <span>
-                  {getIngredientEmoji(name)} {name}
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-lg dark:bg-violet-500/10">
+                  {item.emoji}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => remove(name)}
-                  aria-label={`Remove ${name}`}
-                  className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full text-violet-400 transition-colors hover:bg-violet-200 hover:text-violet-700 dark:hover:bg-violet-500/20"
-                >
-                  <X size={12} />
-                </button>
-              </motion.span>
-            ))}
-          </div>
+                <span className="min-w-0 text-sm font-semibold leading-tight text-neutral-800 dark:text-neutral-200">
+                  {item.name}
+                </span>
+                {isSelected && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-white ring-2 ring-white dark:ring-[#1a1626]">
+                    <Check size={11} strokeWidth={3} />
+                  </span>
+                )}
+              </motion.button>
+            );
+          })}
         </div>
+      ) : (
+        <p className="py-2 text-sm text-neutral-400 dark:text-neutral-500">
+          No matches — press Enter in the search box to add &ldquo;{query}&rdquo; as a custom ingredient.
+        </p>
+      )}
+
+      {!showAll && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="self-start rounded-full border border-dashed border-violet-300 px-4 py-2 text-sm font-semibold text-violet-600 transition-colors hover:bg-violet-50 dark:border-violet-400/40 dark:text-violet-300 dark:hover:bg-violet-500/10"
+        >
+          + View {filteredCatalog.length - INITIAL_VISIBLE_COUNT} more
+        </button>
       )}
     </div>
   );

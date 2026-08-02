@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 import { Hero } from "@/components/home/hero";
 import { FeaturedRecipe } from "@/components/home/featured-recipe";
 import { TrendingRecipes } from "@/components/home/trending-recipes";
@@ -47,8 +47,12 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-1 flex-col overflow-x-hidden bg-(--background)">
-      <Header />
+    <div className="relative flex flex-1 flex-col overflow-x-hidden bg-(--background)">
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-24 right-[-10%] h-[28rem] w-[28rem] rounded-full bg-violet-300/20 blur-3xl dark:bg-violet-600/10" />
+        <div className="absolute top-[45rem] -left-32 h-[26rem] w-[26rem] rounded-full bg-amber-200/15 blur-3xl dark:bg-amber-500/10" />
+        <div className="absolute bottom-0 right-[10%] h-80 w-80 rounded-full bg-rose-200/15 blur-3xl dark:bg-rose-500/10" />
+      </div>
       <main className="flex-1">
         <Hero onGenerate={handleSearch} isGenerating={isGenerating} />
         <div ref={featuredRef} className="scroll-mt-24">
@@ -65,6 +69,7 @@ export default function Home() {
         <TrendingRecipes items={trending} isLoading={isLoadingShowcase} onSelect={handleTrendingSelect} />
         <FeatureStrip />
       </main>
+      <Footer />
       <RecipeModal recipe={recipe} open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );

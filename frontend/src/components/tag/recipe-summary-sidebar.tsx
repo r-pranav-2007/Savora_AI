@@ -1,25 +1,25 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  BarChart3,
-  CalendarDays,
-  Clock,
-  Flame,
-  Globe,
-  Heart,
-  NotebookPen,
-  Sparkles,
-  Users,
-} from "lucide-react";
-import { IconBadge } from "@/components/ui/icon-badge";
+import { AlertTriangle, Plus, RotateCcw, Sparkles, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getIngredientEmoji } from "@/lib/ingredient-catalog";
-import { SPICE_LEVEL_OPTIONS } from "@/lib/types";
 
 type Tone = "violet" | "green" | "rose" | "amber" | "blue";
 
+const TONE_TEXT_CLASS: Record<Tone, string> = {
+  violet: "text-violet-600 dark:text-violet-400",
+  green: "text-emerald-600 dark:text-emerald-400",
+  rose: "text-rose-600 dark:text-rose-400",
+  amber: "text-amber-600 dark:text-amber-400",
+  blue: "text-blue-600 dark:text-blue-400",
+};
+
 interface RecipeSummarySidebarProps {
   ingredients: string[];
+  onRemoveIngredient: (name: string) => void;
+  onAddIngredientsClick: () => void;
+  onClearAll: () => void;
   cuisine?: string;
   mealType?: string;
   cookingTime?: string;
@@ -27,71 +27,31 @@ interface RecipeSummarySidebarProps {
   dietaryPreference: string[];
   difficulty?: string;
   servings: number;
-  additionalPreferences: string;
+  onGenerate: () => void;
+  isGenerating: boolean;
+  error: string | null;
 }
 
-function SummaryRow({
-  icon: Icon,
-  tone,
-  label,
-  value,
-  isSet,
-  extra,
-}: {
-  icon: typeof Globe;
-  tone: Tone;
-  label: string;
-  value: string;
-  isSet: boolean;
-  extra?: React.ReactNode;
-}) {
+function SummaryLine({ label, value, tone }: { label: string; value?: string; tone: Tone }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 8 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.25 }}
-      className="flex items-center gap-3 border-t border-black/5 py-3.5 first:border-t-0 dark:border-white/10"
-    >
-      <IconBadge icon={Icon} tone={isSet ? tone : "neutral"} size="sm" className={isSet ? "" : "opacity-50"} />
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-bold text-neutral-900 dark:text-white">{label}</span>
-        <span
-          className={`block truncate text-sm ${
-            isSet
-              ? "font-medium text-violet-600 dark:text-violet-400"
-              : "italic text-neutral-400 dark:text-neutral-600"
-          }`}
-        >
-          {value}
-        </span>
+    <div className="flex items-center justify-between gap-3 py-2.5 text-sm">
+      <span className="text-neutral-500 dark:text-neutral-400">{label}</span>
+      <span
+        className={`truncate text-right ${
+          value ? `font-semibold ${TONE_TEXT_CLASS[tone]}` : "italic text-neutral-400 dark:text-neutral-600"
+        }`}
+      >
+        {value || "Not set"}
       </span>
-      {isSet && extra}
-    </motion.div>
-  );
-}
-
-function SpiceDots({ level }: { level: string }) {
-  const index = SPICE_LEVEL_OPTIONS.indexOf(level as (typeof SPICE_LEVEL_OPTIONS)[number]);
-  const filled = index >= 0 ? index + 1 : 0;
-  return (
-    <span className="flex shrink-0 gap-0.5">
-      {SPICE_LEVEL_OPTIONS.map((_, i) => (
-        <Flame
-          key={i}
-          size={12}
-          className={
-            i < filled
-              ? "fill-rose-400 text-rose-400"
-              : "fill-neutral-200 text-neutral-200 dark:fill-white/10 dark:text-white/10"
-          }
-        />
-      ))}
-    </span>
+    </div>
   );
 }
 
 export function RecipeSummarySidebar({
   ingredients,
+  onRemoveIngredient,
+  onAddIngredientsClick,
+  onClearAll,
   cuisine,
   mealType,
   cookingTime,
@@ -99,130 +59,119 @@ export function RecipeSummarySidebar({
   dietaryPreference,
   difficulty,
   servings,
-  additionalPreferences,
+  onGenerate,
+  isGenerating,
+  error,
 }: RecipeSummarySidebarProps) {
-  const checklist = [
-    ingredients.length > 0,
-    Boolean(cuisine),
-    Boolean(mealType),
-    Boolean(cookingTime),
-    Boolean(spiceLevel),
-    dietaryPreference.length > 0,
-    Boolean(difficulty),
-  ];
-  const completedCount = checklist.filter(Boolean).length;
-  const totalCount = checklist.length;
-  const progressPercent = Math.round((completedCount / totalCount) * 100);
-
   return (
-    <aside className="flex flex-col gap-1 rounded-3xl border border-black/5 bg-white p-6 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/[0.04]">
-      <div className="mb-1 flex items-center gap-2">
-        <Sparkles size={18} className="text-violet-500" />
-        <div>
-          <h3 className="text-base font-bold text-neutral-900 dark:text-white">Your Recipe Summary</h3>
-          <p className="text-xs text-neutral-400 dark:text-neutral-500">Review your selections</p>
+    <aside className="flex flex-col gap-5">
+      <div className="rounded-3xl border border-black/5 bg-white p-6 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/[0.04]">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Sparkles size={18} className="text-violet-500" />
+            <div>
+              <h3 className="text-base font-bold text-neutral-900 dark:text-white">Your Recipe Summary</h3>
+              <p className="text-xs text-neutral-400 dark:text-neutral-500">Here&rsquo;s what we&rsquo;ve got so far</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClearAll}
+            className="flex shrink-0 items-center gap-1 text-xs font-semibold text-neutral-400 transition-colors hover:text-violet-600 dark:text-neutral-500 dark:hover:text-violet-400"
+          >
+            <RotateCcw size={12} />
+            Clear all
+          </button>
         </div>
-      </div>
 
-      <div className="mb-1 mt-3 flex items-center justify-between text-xs font-semibold text-neutral-400 dark:text-neutral-500">
-        <span>Progress</span>
-        <span className="text-violet-600 dark:text-violet-400">
-          {completedCount} of {totalCount}
-        </span>
-      </div>
-      <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-white/10">
-        <motion.div
-          animate={{ width: `${progressPercent}%` }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="gradient-brand h-full rounded-full"
-        />
-      </div>
-
-      <div className="border-t border-black/5 py-3.5 dark:border-white/10">
-        <div className="mb-2 flex items-center gap-2">
-          <span
-            className={`h-2 w-2 rounded-full ${ingredients.length > 0 ? "bg-emerald-400" : "bg-neutral-300 dark:bg-white/15"}`}
-          />
-          <span className="text-sm font-bold text-neutral-900 dark:text-white">Ingredients</span>
-          <span className="ml-auto rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-semibold text-neutral-500 dark:bg-white/10 dark:text-neutral-400">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-sm font-bold text-neutral-900 dark:text-white">Selected Ingredients</span>
+          <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-semibold text-neutral-500 dark:bg-white/10 dark:text-neutral-400">
             {ingredients.length}
           </span>
         </div>
+
         {ingredients.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="mb-2 flex flex-col gap-1.5">
             {ingredients.map((name) => (
-              <span
+              <motion.div
                 key={name}
-                className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700 dark:bg-violet-500/10 dark:text-violet-300"
+                initial={{ opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center justify-between gap-2 rounded-xl bg-violet-50 px-3 py-2 dark:bg-violet-500/10"
               >
-                {getIngredientEmoji(name)} {name}
-              </span>
+                <span className="min-w-0 truncate text-sm font-medium text-violet-700 dark:text-violet-300">
+                  {getIngredientEmoji(name)} {name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onRemoveIngredient(name)}
+                  aria-label={`Remove ${name}`}
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-violet-400 transition-colors hover:bg-violet-200 hover:text-violet-700 dark:hover:bg-violet-500/20"
+                >
+                  <X size={12} />
+                </button>
+              </motion.div>
             ))}
           </div>
         ) : (
-          <p className="rounded-xl border border-dashed border-black/10 px-3 py-2.5 text-xs text-neutral-400 dark:border-white/10 dark:text-neutral-500">
-            Nothing selected yet — search or tap a popular ingredient to get started.
+          <p className="mb-2 rounded-xl border border-dashed border-black/10 px-3 py-2.5 text-xs text-neutral-400 dark:border-white/10 dark:text-neutral-500">
+            Nothing selected yet — search or tap an ingredient to get started.
           </p>
         )}
-      </div>
 
-      <SummaryRow icon={Globe} tone="violet" label="Cuisine" value={cuisine ?? "Not set yet"} isSet={Boolean(cuisine)} />
-      <SummaryRow
-        icon={CalendarDays}
-        tone="amber"
-        label="Meal Type"
-        value={mealType ?? "Not set yet"}
-        isSet={Boolean(mealType)}
-      />
-      <SummaryRow
-        icon={Clock}
-        tone="blue"
-        label="Cooking Time"
-        value={cookingTime ?? "Not set yet"}
-        isSet={Boolean(cookingTime)}
-      />
-      <SummaryRow
-        icon={Flame}
-        tone="rose"
-        label="Spice Level"
-        value={spiceLevel ?? "Not set yet"}
-        isSet={Boolean(spiceLevel)}
-        extra={spiceLevel ? <SpiceDots level={spiceLevel} /> : undefined}
-      />
-      <SummaryRow
-        icon={Heart}
-        tone="green"
-        label="Dietary Preference"
-        value={dietaryPreference.length > 0 ? dietaryPreference.join(", ") : "Not set yet"}
-        isSet={dietaryPreference.length > 0}
-      />
-      <SummaryRow
-        icon={BarChart3}
-        tone="amber"
-        label="Difficulty"
-        value={difficulty ?? "Not set yet"}
-        isSet={Boolean(difficulty)}
-      />
-      <SummaryRow icon={Users} tone="violet" label="Servings" value={`${servings} servings`} isSet />
-      <SummaryRow
-        icon={NotebookPen}
-        tone="violet"
-        label="Additional Preferences"
-        value={additionalPreferences.trim() || "None added"}
-        isSet={Boolean(additionalPreferences.trim())}
-      />
+        <button
+          type="button"
+          onClick={onAddIngredientsClick}
+          className="mb-1 flex items-center gap-1 text-sm font-semibold text-violet-600 transition-colors hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
+        >
+          <Plus size={14} />
+          Add more ingredients
+        </button>
+
+        <div className="divide-y divide-black/5 border-t border-black/5 dark:divide-white/10 dark:border-white/10">
+          <SummaryLine label="Cuisine" value={cuisine} tone="violet" />
+          <SummaryLine label="Meal Type" value={mealType} tone="amber" />
+          <SummaryLine
+            label="Dietary Preference"
+            value={dietaryPreference.length > 0 ? dietaryPreference.join(", ") : undefined}
+            tone="green"
+          />
+          <SummaryLine label="Cooking Time" value={cookingTime} tone="blue" />
+          <SummaryLine label="Spice Level" value={spiceLevel} tone="rose" />
+          <SummaryLine label="Difficulty" value={difficulty} tone="amber" />
+          <SummaryLine label="Servings" value={`${servings} servings`} tone="violet" />
+        </div>
+
+        {error && (
+          <div className="mt-4 flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2.5 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-300">
+            <AlertTriangle size={14} className="shrink-0" />
+            {error}
+          </div>
+        )}
+
+        <Button size="lg" onClick={onGenerate} disabled={isGenerating} className="mt-5 w-full">
+          <Sparkles size={17} />
+          {isGenerating ? "Generating..." : "Generate Recipe"}
+        </Button>
+        <p className="mt-2 text-center text-xs text-neutral-400 dark:text-neutral-500">
+          Our AI will craft the perfect recipe for you!
+        </p>
+      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
-        className="mt-4 rounded-2xl bg-violet-50 p-4 dark:bg-violet-500/10"
+        className="rounded-2xl bg-violet-50 p-5 dark:bg-violet-500/10"
       >
         <p className="mb-1 flex items-center gap-1.5 text-sm font-bold text-violet-700 dark:text-violet-300">
-          Ready to create something amazing?
+          <Sparkles size={14} />
+          AI Magic
         </p>
         <p className="text-xs leading-relaxed text-violet-600/80 dark:text-violet-300/70">
-          Our AI will generate the perfect recipe based on your selections. ✨
+          The more details you add, the more personalized and accurate your recipe will be.
         </p>
       </motion.div>
     </aside>
