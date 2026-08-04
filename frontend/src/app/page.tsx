@@ -70,7 +70,13 @@ export default function Home() {
         <FeatureStrip />
       </main>
       <Footer />
-      <RecipeModal recipe={recipe} open={modalOpen} onClose={() => setModalOpen(false)} />
+      <RecipeModal
+        recipe={recipe}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onRegenerate={handleRetry}
+        isRegenerating={isGenerating}
+      />
     </div>
   );
 }

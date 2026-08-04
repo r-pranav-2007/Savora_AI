@@ -30,7 +30,10 @@ export function Header() {
       className="sticky top-0 z-50 border-b border-black/5 bg-white/80 backdrop-blur-md dark:border-white/10 dark:bg-[#0d0b14]/80"
     >
       <div className="mx-auto flex h-18 max-w-[1600px] items-center justify-between px-4 py-3 sm:px-6 lg:px-10">
-        <Link href="/" className="flex items-center">
+        <Link
+          href="/"
+          className="flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#0d0b14]"
+        >
           <Image src="/logo-icon.png" alt="Savora" width={278} height={426} className="h-10 w-auto" priority />
         </Link>
 
@@ -41,7 +44,7 @@ export function Header() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="relative py-1 text-sm font-medium text-neutral-700 transition-colors duration-300 hover:text-violet-600 dark:text-neutral-300 dark:hover:text-violet-400"
+                className="relative rounded-md py-1 text-sm font-medium text-neutral-700 transition-colors duration-300 hover:text-violet-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-neutral-300 dark:hover:text-violet-400 dark:focus-visible:ring-offset-[#0d0b14]"
               >
                 <span
                   className={`transition-colors duration-300 ${isActive ? "text-violet-600 dark:text-violet-400" : ""}`}
@@ -74,7 +77,7 @@ export function Header() {
             type="button"
             onClick={() => setMenuOpen((prev) => !prev)}
             aria-label="Toggle menu"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-black/5 bg-white text-neutral-700 md:hidden dark:border-white/10 dark:bg-white/10 dark:text-neutral-200"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-black/5 bg-white text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white md:hidden dark:border-white/10 dark:bg-white/10 dark:text-neutral-200 dark:focus-visible:ring-offset-[#0d0b14]"
           >
             {menuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
@@ -98,7 +101,7 @@ export function Header() {
                     key={link.label}
                     href={link.href}
                     onClick={() => setMenuOpen(false)}
-                    className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
+                    className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#0d0b14] ${
                       isActive
                         ? "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-300"
                         : "text-neutral-700 dark:text-neutral-300"

@@ -135,6 +135,11 @@ export default function TagModePage() {
     setAdditionalPreferences("");
   };
 
+  const preferencesComplete = Boolean(
+    cuisine || mealType || dietaryPreference.length > 0 || cookingTime || spiceLevel || difficulty
+  );
+  const completedSteps = [ingredients.length > 0, preferencesComplete, Boolean(recipe)];
+
   const handleGenerate = async () => {
     const result = await generate({
       mode: "tag",
@@ -207,7 +212,12 @@ export default function TagModePage() {
         </section>
 
         <div className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-          <StepperNav steps={STEPS} activeIndex={activeStep} onStepClick={handleStepClick} />
+          <StepperNav
+            steps={STEPS}
+            activeIndex={activeStep}
+            completed={completedSteps}
+            onStepClick={handleStepClick}
+          />
         </div>
 
         <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
@@ -386,7 +396,13 @@ export default function TagModePage() {
         </section>
       </main>
 
-      <RecipeModal recipe={recipe} open={modalOpen} onClose={() => setModalOpen(false)} />
+      <RecipeModal
+        recipe={recipe}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onRegenerate={handleGenerate}
+        isRegenerating={isGenerating}
+      />
     </div>
   );
 }
